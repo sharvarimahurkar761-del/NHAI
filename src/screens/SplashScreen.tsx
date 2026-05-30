@@ -9,14 +9,12 @@ import {
 const SplashScreen = ({ navigation }: any) => {
 
   useEffect(() => {
-
-    setTimeout(() => {
-
+    const timer = setTimeout(() => {
       navigation.replace('Login');
-
     }, 2500);
 
-  }, []);
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
   return (
 

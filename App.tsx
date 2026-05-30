@@ -1,41 +1,8 @@
 import React from 'react';
-
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
+import AppNavigator from './src/navigation/AppNavigator';
 
 const App = () => {
-
-  return (
-
-    <View style={styles.container}>
-
-      <Text style={styles.text}>
-        FaceAuth AI 🚀
-      </Text>
-
-    </View>
-
-  );
+  return <AppNavigator />;
 };
-
-const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#111827',
-  },
-
-  text: {
-    color: 'white',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-
-});
 
 export default App;

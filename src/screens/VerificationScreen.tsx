@@ -19,28 +19,24 @@ const VerificationScreen = ({ navigation }: any) => {
   new Animated.Value(0)
 ).current;
 useEffect(() => {
-
-  Animated.loop(
-
+  const animation = Animated.loop(
     Animated.sequence([
-
       Animated.timing(scanAnim, {
         toValue: 180,
         duration: 1500,
         useNativeDriver: true,
       }),
-
       Animated.timing(scanAnim, {
         toValue: 0,
         duration: 1500,
         useNativeDriver: true,
       }),
+    ]),
+  );
 
-    ])
-
-  ).start();
-
-}, []);
+  animation.start();
+  return () => animation.stop();
+}, [scanAnim]);
 
   const handleVerification = () => {
 

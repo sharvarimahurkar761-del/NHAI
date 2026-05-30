@@ -1,15 +1,11 @@
 import React from 'react';
 
-import { NavigationContainer }
-from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { createNativeStackNavigator }
-from '@react-navigation/native-stack';
-
-import SplashScreen from '../screens/SplashScreen';
-import LoginScreen from '../screens/LoginScreen';
-import DashboardScreen from '../screens/DashboardScreen';
-import VerificationScreen from '../screens/VerificationScreen';
+import HomeScreen from '../screens/HomeScreen';
+import CameraScreen from '../screens/CameraScreen';
+import EnrollmentScreen from '../screens/EnrollmentScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -18,29 +14,25 @@ const AppNavigator = () => {
 
     <NavigationContainer>
 
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="Home">
 
         <Stack.Screen
-          name="Splash"
-          component={SplashScreen}
+          name="Home"
+          component={HomeScreen}
           options={{ headerShown: false }}
         />
 
         <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
+          name="Camera"
+          component={CameraScreen}
+          options={{ title: 'Face Capture' }}
         />
 
         <Stack.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{ headerShown: false }}
+          name="Enrollment"
+          component={EnrollmentScreen}
+          options={{ title: 'Face Enrollment' }}
         />
-        <Stack.Screen
-  name="Verification"
-  component={VerificationScreen}
-/>
 
       </Stack.Navigator>
 
