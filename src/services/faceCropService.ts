@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
 import type { FaceBounds } from '../utils/faceDetection';
 import {
   calculateCropBounds,

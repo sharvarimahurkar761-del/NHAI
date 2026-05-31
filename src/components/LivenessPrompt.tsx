@@ -23,7 +23,7 @@ const LivenessPrompt = ({ message, step, total }: LivenessPromptProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111827',
+    backgroundColor: '#0b1220',
     borderRadius: 18,
     padding: 16,
   },

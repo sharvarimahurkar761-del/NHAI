@@ -2,8 +2,6 @@ let Tflite: any = null;
 try {
   // require optional native dependency
   // using require so this module can be optional during JS-only builds
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  // (the rule may be disabled in some configs; keeping comment for clarity)
   // @ts-ignore
   Tflite = require('react-native-tflite');
 } catch {
@@ -130,7 +128,9 @@ class ModelService {
     }
 
     try {
-      // runModelOnImage supports image path, specify output as array
+      // runModelOnImage supports image path and returns predictions arrays.
+      // For this face embedding model we expect a flattened float tensor of length ~128.
+      // The wrapper may return an array of arrays or a result object, so we adapt carefully.
       const result: any = await new Promise((resolve, reject) => {
         this.tflite.runModelOnImage({
           path: imagePath,
@@ -149,9 +149,13 @@ class ModelService {
       // many wrappers return a flattened float array in res; adapt as necessary.
       let embedding: number[] = [];
       if (Array.isArray(result)) {
-        // try to find numeric array
+        // The model output may be nested. Look for the first numeric array.
         const numeric = result.find((r: any) => Array.isArray(r) && typeof r[0] === 'number');
         if (numeric) embedding = numeric as number[];
+      }
+      // If the wrapper returns a single numeric array directly, accept that too.
+      if (embedding.length === 0 && Array.isArray(result) && typeof result[0] === 'number') {
+        embedding = result as number[];
       }
 
       const inferenceTimeMs = Date.now() - start;

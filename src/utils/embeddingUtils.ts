@@ -2,6 +2,9 @@ import type { Embedding } from './types';
 
 const DEFAULT_EMBEDDING_SIZE = 128;
 
+// Embeddings are expected to be normalized, fixed-length vectors.
+// The default model target is 128 dimensions. If a teammate uses a different model,
+// update this constant and the matching logic in similarity.ts accordingly.
 export const createEmbeddingSeed = (imageUri: string, userId: string): string => {
   return `${userId}:${imageUri}`;
 };

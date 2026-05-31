@@ -2,10 +2,15 @@ import * as embeddingService from './embeddingService';
 import * as attendanceService from './attendanceService';
 import { generateMockEmbedding } from '../utils/embeddingUtils';
 import { EMBEDDING_MATCH_THRESHOLD } from '../utils/similarity';
+import monitoring from './monitoringService';
+import { perf, isDebug } from '../utils/debugHelpers';
 import type { FaceBounds } from '../utils/faceDetection';
 import type { Embedding, EnrolledUser } from '../utils/types';
 
 const DEFAULT_COOLDOWN_SECONDS = 60;
+// Recognition tuning thresholds
+const LOW_CONFIDENCE_THRESHOLD = 0.55; // below this: no match
+const HIGH_CONFIDENCE_THRESHOLD = 0.75; // above this: auto-mark attendance
 
 const parseTimestamp = (ts?: string | null) => {
   if (!ts) return null;
@@ -27,13 +32,16 @@ export const processDetectedFace = async (face: FaceBounds, cooldownSeconds = DE
   try {
     const probe = buildProbeEmbeddingFromFace(face);
 
+    if (isDebug()) perf.start('findBestEmbeddingMatch');
     const { user, similarity, isMatch } = await embeddingService.findBestEmbeddingMatch(probe, EMBEDDING_MATCH_THRESHOLD);
+    if (isDebug()) perf.end('findBestEmbeddingMatch');
 
     let result: {
       isMatch: boolean;
       similarity: number;
       user: EnrolledUser | null;
       attendanceMarked: boolean;
+      lowConfidence?: boolean;
       reason?: string;
     } = {
       isMatch,
@@ -42,9 +50,28 @@ export const processDetectedFace = async (face: FaceBounds, cooldownSeconds = DE
       attendanceMarked: false,
     };
 
-    if (!isMatch || !user) {
-      result.reason = 'No matching enrolled user';
-      console.log('recognitionService.processDetectedFace no match', result.similarity);
+    if (!user) {
+      result.reason = 'No enrolled users available';
+      console.log('recognitionService.processDetectedFace no user', result.similarity);
+      return result;
+    }
++    monitoring.incr('recognitionAttempts');
+
+    // low / high confidence handling
+    if (similarity < LOW_CONFIDENCE_THRESHOLD) {
+      result.isMatch = false;
+      result.reason = 'Low similarity';
+      console.log('recognitionService.processDetectedFace low similarity', result.similarity);
+      return result;
+    }
+
+    if (similarity < HIGH_CONFIDENCE_THRESHOLD) {
+      // between low and high: low-confidence fallback
+      result.isMatch = false;
+      result.lowConfidence = true;
+      result.reason = 'Low-confidence match';
+      monitoring.incr('recognitionLowConfidence');
+      console.log('recognitionService.processDetectedFace low-confidence', result.similarity);
       return result;
     }
 
@@ -67,9 +94,11 @@ export const processDetectedFace = async (face: FaceBounds, cooldownSeconds = DE
     }
 
     // Mark attendance for matched user
+    // High confidence: proceed with attendance
     try {
       const recordId = await attendanceService.saveAttendance(user.userId);
       result.attendanceMarked = true;
+      monitoring.incr('recognitionSuccesses');
       console.log('recognitionService.processDetectedFace attendance saved', { userId: user.userId, recordId });
     } catch (err) {
       console.error('recognitionService.processDetectedFace saveAttendance failed', err);
@@ -92,6 +121,7 @@ export const processEmbedding = async (probe: Embedding, cooldownSeconds = DEFAU
       similarity: number;
       user: EnrolledUser | null;
       attendanceMarked: boolean;
+      lowConfidence?: boolean;
       reason?: string;
     } = {
       isMatch,
@@ -100,9 +130,24 @@ export const processEmbedding = async (probe: Embedding, cooldownSeconds = DEFAU
       attendanceMarked: false,
     };
 
-    if (!isMatch || !user) {
-      result.reason = 'No matching enrolled user';
-      console.log('recognitionService.processEmbedding no match', result.similarity);
+    if (!user) {
+      result.reason = 'No enrolled users available';
+      console.log('recognitionService.processEmbedding no user', result.similarity);
+      return result;
+    }
+
+    if (similarity < LOW_CONFIDENCE_THRESHOLD) {
+      result.isMatch = false;
+      result.reason = 'Low similarity';
+      console.log('recognitionService.processEmbedding low similarity', result.similarity);
+      return result;
+    }
+
+    if (similarity < HIGH_CONFIDENCE_THRESHOLD) {
+      result.isMatch = false;
+      result.lowConfidence = true;
+      result.reason = 'Low-confidence match';
+      console.log('recognitionService.processEmbedding low-confidence', result.similarity);
       return result;
     }
 

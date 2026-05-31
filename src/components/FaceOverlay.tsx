@@ -16,13 +16,12 @@ type FaceOverlayProps = {
 const FaceOverlay = ({ faces, cameraViewSize, statusLabel, livenessPhase, livenessPassed }: FaceOverlayProps) => {
   const { width: previewWidth, height: previewHeight } = cameraViewSize;
   const hasPreview = previewWidth > 0 && previewHeight > 0;
-  const overlayStatus = livenessPhase ? `${statusLabel} · ${livenessPhase}` : statusLabel;
-
   return (
     <View style={styles.overlay} pointerEvents="none">
       <View style={styles.statusBadge}>
-        <Text style={styles.statusText}>{overlayStatus}</Text>
+        <Text style={styles.statusText}>{statusLabel}</Text>
         {livenessPhase ? <Text style={styles.phaseText}>{livenessPhase}</Text> : null}
+        {livenessPassed ? <Text style={styles.passedText}>Liveness OK</Text> : null}
       </View>
 
       {hasPreview && faces.map((face, index) => {
@@ -64,7 +63,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 14,
     left: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.86)',
+    backgroundColor: 'rgba(2,6,23,0.9)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
@@ -74,6 +73,12 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#e2e8f0',
     fontSize: 14,
+    fontWeight: '700',
+  },
+  passedText: {
+    marginTop: 4,
+    color: '#86efac',
+    fontSize: 12,
     fontWeight: '700',
   },
   boundingBox: {

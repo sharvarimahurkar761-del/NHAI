@@ -11,14 +11,20 @@ const initDatabase = async () => {
 export const saveAttendance = async (userId = 'user-001'): Promise<number> => {
   const db = await initDatabase();
   const timestamp = formatTimestamp(new Date());
-  const [result] = await db.executeSql(
-    'INSERT INTO attendance (userId, timestamp, synced) VALUES (?, ?, ?);',
-    [userId, timestamp, 0],
-  );
-
-  const insertId = result.insertId ?? -1;
-  await closeDatabase(db);
-  return insertId;
+  try {
+    const [result] = await db.executeSql(
+      'INSERT INTO attendance (userId, timestamp, synced) VALUES (?, ?, ?);',
+      [userId, timestamp, 0],
+    );
+    const insertId = result.insertId ?? -1;
+    console.log('attendanceService.saveAttendance saved', { userId, insertId });
+    return insertId;
+  } catch (err) {
+    console.error('attendanceService.saveAttendance error', err);
+    throw err;
+  } finally {
+    await closeDatabase(db);
+  }
 };
 
 export const getPendingAttendance = async (): Promise<AttendanceRecord[]> => {
@@ -34,6 +40,7 @@ export const getPendingAttendance = async (): Promise<AttendanceRecord[]> => {
   }
 
   await closeDatabase(db);
+  console.log('attendanceService.getPendingAttendance count=', items.length);
   return items;
 };
 
@@ -48,6 +55,7 @@ export const getAllAttendance = async (): Promise<AttendanceRecord[]> => {
   }
 
   await closeDatabase(db);
+  console.log('attendanceService.getAllAttendance count=', items.length);
   return items;
 };
 
